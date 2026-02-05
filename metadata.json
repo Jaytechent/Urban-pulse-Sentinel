@@ -1,0 +1,7 @@
+{
+  "name": "Urban Pulse Sentinel",
+  "description": "Autonomous urban intelligence system for spatio-temporal multimodal reasoning and incident response.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
