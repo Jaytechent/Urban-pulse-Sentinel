@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MOCK_STREAMS } from './constants';
+import { INITIAL_INCIDENTS, MOCK_STREAMS } from './constants';
 import CityMap from './components/CityMap';
 import StreamGrid from './components/StreamGrid';
 import IncidentFeed from './components/IncidentFeed';
@@ -13,6 +13,7 @@ const App: React.FC = () => {
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
   const [backendError, setBackendError] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'streams' | 'settings'>('dashboard');
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api';
   
   const selectedIncident = incidents.find(i => i.id === selectedIncidentId) || null;
 
@@ -20,7 +21,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchIncidents = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/incidents');
+        const res = await fetch(`${backendUrl}/incidents`);
         if (!res.ok) throw new Error("Failed to connect");
         const data = await res.json();
         setIncidents(data);
@@ -28,6 +29,7 @@ const App: React.FC = () => {
       } catch (err) {
         console.error("Backend unreachable, using fallback data if available", err);
         setBackendError(true);
+        setIncidents(INITIAL_INCIDENTS);
       }
     };
 
@@ -156,7 +158,7 @@ const App: React.FC = () => {
         )}
 
         {activeTab === 'settings' && (
-           <SettingsView />
+           <SettingsView backendUrl={backendUrl} />
         )}
       </div>
     </div>

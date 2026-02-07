@@ -1,7 +1,11 @@
 import React from 'react';
 import { Activity, Database, Shield, ToggleLeft, ToggleRight, Server } from 'lucide-react';
 
-const SettingsView: React.FC = () => {
+interface SettingsViewProps {
+  backendUrl: string;
+}
+
+const SettingsView: React.FC<SettingsViewProps> = ({ backendUrl }) => {
   return (
     <div className="flex-1 overflow-y-auto bg-slate-950 p-8 animate-in fade-in duration-300">
       <div className="max-w-4xl mx-auto space-y-8">
@@ -101,7 +105,7 @@ const SettingsView: React.FC = () => {
                <div className="flex flex-col gap-1">
                  <label className="text-xs text-slate-400 font-bold uppercase">API Endpoint</label>
                  <div className="flex gap-2">
-                    <input type="text" value="http://localhost:5000/api" readOnly className="flex-1 bg-slate-950 border border-slate-700 rounded px-3 py-2 text-slate-300 font-mono text-sm focus:outline-none focus:border-indigo-500 transition-colors" />
+                    <input type="text" value={backendUrl} readOnly className="flex-1 bg-slate-950 border border-slate-700 rounded px-3 py-2 text-slate-300 font-mono text-sm focus:outline-none focus:border-indigo-500 transition-colors" />
                     <button className="px-4 py-2 bg-slate-800 text-slate-200 text-xs font-bold rounded border border-slate-700 hover:bg-slate-700 transition-colors">TEST</button>
                  </div>
                </div>
