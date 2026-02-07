@@ -1,11 +1,16 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { createServer } from 'http';
+import { WebSocketServer } from 'ws';
 import connectDB from './config/db.js';
 import streamRoutes from './routes/streams.js';
 import incidentRoutes from './routes/incidents.js';
+import ingestRoutes from './routes/ingest.js';
+import actionRoutes from './routes/actions.js';
 import Incident from './models/Incident.js';
 import Stream from './models/Stream.js';
+import { runIngestionCycle } from './services/ingestPipeline.js';
 
 // Load env vars
 dotenv.config();
@@ -21,6 +26,8 @@ app.use(express.json());
 // Routes
 app.use('/api/streams', streamRoutes);
 app.use('/api/incidents', incidentRoutes);
+app.use('/api/ingest', ingestRoutes);
+app.use('/api/actions', actionRoutes);
 
 // Health Check
 app.get('/', (req, res) => {
@@ -83,6 +90,38 @@ const seedData = async () => {
 seedData();
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = createServer(app);
+const wss = new WebSocketServer({ server, path: process.env.WS_PATH || '/ws' });
+
+const broadcast = (event, payload) => {
+  const message = JSON.stringify({ event, payload, sentAt: new Date().toISOString() });
+  wss.clients.forEach((client) => {
+    if (client.readyState === client.OPEN) {
+      client.send(message);
+    }
+  });
+};
+
+app.locals.broadcast = broadcast;
+
+wss.on('connection', (socket) => {
+  socket.send(JSON.stringify({ event: 'connected', payload: { status: 'ok' } }));
+});
+
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+const enableLoop = process.env.ENABLE_INGEST_LOOP === 'true';
+if (enableLoop) {
+  const intervalMs = Number(process.env.INGEST_INTERVAL_MS || 600000);
+  console.log(`Starting ingestion loop every ${intervalMs}ms`);
+  runIngestionCycle({ broadcaster: app.locals.broadcast }).catch((error) => {
+    console.error('Initial ingestion cycle failed:', error);
+  });
+  setInterval(() => {
+    runIngestionCycle({ broadcaster: app.locals.broadcast }).catch((error) => {
+      console.error('Ingestion cycle failed:', error);
+    });
+  }, intervalMs);
+}

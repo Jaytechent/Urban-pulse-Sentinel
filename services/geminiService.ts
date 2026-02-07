@@ -1,7 +1,6 @@
 import { Incident, Stream } from "../types";
 
-// The backend URL. In production, this would be an environment variable.
-const BACKEND_URL = 'http://localhost:5000/api';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api';
 
 export const generateIncidentAnalysis = async (
   incident: Incident,
