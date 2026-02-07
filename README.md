@@ -1,14 +1,14 @@
 # Urban Pulse Sentinel
 
-Urban Pulse Sentinel is an **autonomous urban intelligence system** that continuously monitors authorized city data streams (video, social signals, sensors, and context APIs), detects emerging anomalies through **spatio‑temporal multimodal reasoning**, and recommends justified interventions. It is **not a chatbot**. It is an **Action‑Era orchestrator** built around Gemini 3.
+Urban Pulse Sentinel is an **autonomous urban intelligence system** that continuously monitors authorized city data streams (video, social signals, sensors, and context APIs), detects emerging anomalies through **spatio‑temporal multimodal reasoning**, and recommends justified interventions powered by Gemini 3 pro Review and Build with Google AI studio.
 
-> **Judge‑friendly summary:** Urban Pulse Sentinel fuses video + social + sensor signals to identify real‑world anomalies, explain why they matter, and propose actionable responses with confidence scoring—turning raw city data into explainable, proactive urban intelligence.
+> **summary:** Urban Pulse Sentinel fuses video + social + sensor signals to identify real‑world anomalies, explain why they matter, and propose actionable responses with confidence scoring and turning raw city data into explainable, proactive urban intelligence.
 
 ---
 
 ## Table of Contents
 - [System Goal](#system-goal)
-- [Key Differentiators (Why We Can Win)](#key-differentiators-why-we-can-win)
+- [Key Differentiators ](#key-differentiators)
 - [Architecture Overview](#architecture-overview)
 - [Tech Stack](#tech-stack)
 - [Core Features](#core-features)
@@ -40,7 +40,7 @@ Then it generates:
 
 ---
 
-## Key Differentiators (Why We Can Win)
+## Key Differentiators (Why We Can Win over current smart cities)
 1. **Action‑Era Orchestration**: Moves beyond dashboards into *decision recommendations* with justifications.
 2. **Multimodal fusion**: Video + sensor + social + context are reasoned together, not in isolation.
 3. **Explainability**: Gemini outputs a reasoning chain + confidence score.
@@ -137,7 +137,7 @@ Actions are simulated and stored:
 - Reroute vehicles (map simulation)
 - Public advisory generation
 
-No real emergency systems are triggered.
+No real emergency systems are triggered for this MVP yet.
 
 ---
 
@@ -159,11 +159,11 @@ Connect to `ws://<host>/ws` to receive:
 ---
 
 ## Deployment (Render + MongoDB Atlas)
-Render free tier sleeps without traffic. Use a GitHub Action (or ping service) to hit:
+Deploy on Render 
 ```
 GET https://<your-render-host>/api/ingest/run
 ```
-This wakes the backend and runs one ingestion cycle.
+
 
 ---
 
@@ -220,7 +220,7 @@ npm run dev
 
 ---
 
-## Project Statement for Judges
+## Project Statement
 Urban Pulse Sentinel is an autonomous urban reasoning agent that detects, understands, and responds to city‑scale anomalies by reasoning across video, social, and sensor data streams in real time. It moves beyond dashboards and alerts into **explainable, proactive urban intelligence**.
 
 ---
@@ -238,10 +238,5 @@ Urban Pulse Sentinel is an autonomous urban reasoning agent that detects, unders
 
 ---
 
-## Why Urban Pulse Sentinel Can Place #1
-- **Clear actionability** + explainability
-- **Realistic data flow and ingestion architecture**
-- **Ethical design baked in**
-- **Demonstrates Action‑Era AI** (not just observation)
 
-If you want, we can add a demo video link and a judge walkthrough checklist in this README.
+demo video link here:  
