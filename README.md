@@ -14,16 +14,11 @@ Urban Pulse Sentinel is an **autonomous urban intelligence system** that continu
 - [Core Features](#core-features)
 - [Data Sources (Legal + Realistic)](#data-sources-legal--realistic)
 - [Ingestion & Reasoning Flow](#ingestion--reasoning-flow)
-- [Anomaly Detection Layer (Before Gemini)](#anomaly-detection-layer-before-gemini)
 - [Gemini Agent Responsibilities](#gemini-agent-responsibilities)
-- [Gemini Prompt & Output (Real Example)](#gemini-prompt--output-real-example)
-- [Thought Signatures (What They Mean)](#thought-signatures-what-they-mean)
-- [Action Orchestration (Concrete + Tracked)](#action-orchestration-concrete--tracked)
-- [Sample Data Artifacts](#sample-data-artifacts)
-- [WebSocket Events](#websocket-events)
+- [Action Orchestration](#action-orchestration)
 - [API Reference (Backend)](#api-reference-backend)
+- [WebSocket Events](#websocket-events)
 - [Deployment (Render + MongoDB Atlas)](#deployment-render--mongodb-atlas)
-- [Reliability & Error Handling](#reliability--error-handling)
 - [Environment Configuration](#environment-configuration)
 - [Run Locally](#run-locally)
 - [Ethics & Privacy](#ethics--privacy)
@@ -62,15 +57,13 @@ Backend (Node.js + Express)
   ├─ Stream registration
   ├─ Ingestion + anomaly processing
   ├─ Gemini reasoning agent
-  ├─ Action tracking
   ├─ MongoDB persistence
   └─ WebSocket live updates
 
 MongoDB
   ├─ Stream
   ├─ Incident
-  ├─ Hypothesis
-  └─ Action
+  └─ Hypothesis
 ```
 
 ---
@@ -82,7 +75,7 @@ MongoDB
 - WebSocket server for live updates
 
 **AI**
-- Gemini 3 (current backend model: `gemini-3-flash-preview`)
+- Gemini 3 Pro (via Google AI Studio)
 - Multimodal reasoning
 - Thought signatures (reasoning chains + confidence)
 
@@ -95,10 +88,10 @@ MongoDB
 ## Core Features
 - **Stream registration** for video, social, and sensor sources
 - **Continuous ingestion pipeline** (interval‑based or external wake‑up ping)
-- **Anomaly detection** from fused signals (rule‑based, pre‑Gemini)
+- **Anomaly detection** from fused signals
 - **Gemini reasoning** with hypothesis + intervention
-- **Action tracking** (recommended → executed/dismissed)
-- **WebSocket updates** to push new incidents and reasoning states
+- **WebSocket updates** to push new incidents
+- **Action confirmation UI** (authorize or dismiss)
 
 ---
 
@@ -128,22 +121,6 @@ MongoDB
 
 ---
 
-## Anomaly Detection Layer (Before Gemini)
-This MVP intentionally runs a **rule‑based anomaly layer** before Gemini to avoid noisy reasoning on raw data.
-
-**Video rules**
-- Uses congestion index + stopped vehicles + pedestrian clusters.
-
-**Social rules**
-- Keyword‑hit thresholds across recent posts.
-
-**Sensor rules**
-- Noise and traffic speed thresholds.
-
-These processors produce a structured payload that Gemini can reason over.
-
----
-
 ## Gemini Agent Responsibilities
 The Gemini agent must:
 1. Fuse multimodal inputs
@@ -154,112 +131,13 @@ The Gemini agent must:
 
 ---
 
-## Gemini Prompt & Output (Real Example)
-**Prompt (excerpt)**
-```text
-You are the Urban Pulse Sentinel AI (Backend Core).
+## Action Orchestration
+Actions are simulated and stored:
+- Alert traffic authorities (mock)
+- Reroute vehicles (map simulation)
+- Public advisory generation
 
-TASK: Perform multimodal reasoning on the following urban incident.
-
-INCIDENT DETAILS:
-Title: Traffic Stoppage - Main St
-Severity: HIGH
-Summary: Detected stationary vehicles for >120s...
-Timestamp: 2024-01-01T00:00:00Z
-
-ACTIVE DATA STREAMS:
-- [VIDEO] Intersection Main/5th (Location: 34.0522, -118.2437)
-- [SOCIAL] Social Sentinel (X)
-
-INSTRUCTIONS:
-1. Analyze the correlation between the incident report and stream types.
-2. Generate a step-by-step reasoning chain explaining the anomaly.
-3. Determine the best specific intervention.
-4. Assign a confidence score (0.0 - 1.0).
-
-RESPONSE FORMAT (JSON ONLY):
-{ "reasoning_steps": [...], "hypothesis_text": "...", "recommended_action": "...", "confidence_score": 0.95 }
-```
-
-**Gemini Output (example)**
-```json
-{
-  "reasoning_steps": [
-    "Video stream shows prolonged vehicle stoppage.",
-    "Social posts mention accident keywords within 5 minutes.",
-    "Weather is clear; congestion is non-routine.",
-    "Conclusion: likely collision blocking lanes."
-  ],
-  "hypothesis_text": "Non-routine congestion likely caused by a collision at Main/5th.",
-  "recommended_action": "Dispatch traffic control units and issue reroute advisory.",
-  "confidence_score": 0.91
-}
-```
-
----
-
-## Thought Signatures (What They Mean)
-**Thought signatures** = the structured reasoning output from Gemini:
-- `reasoning_steps` (explicit chain)
-- `confidence_score` (0–1)
-
-This creates explainability and auditability for every action recommendation.
-
----
-
-## Action Orchestration (Concrete + Tracked)
-Actions are **structured, tracked, and broadcast** (not just text in the UI).
-
-**Action states**:
-- `recommended` → `authorized` → `executed` or `dismissed`
-
-**Example action object**:
-```json
-{
-  "incidentId": "inc-001",
-  "recommendedAction": "Dispatch traffic control units and issue reroute advisory.",
-  "status": "recommended",
-  "createdAt": "2024-01-01T00:00:10Z"
-}
-```
-
-Actions can be updated via API and broadcast to the UI in real time.
-
----
-
-## Sample Data Artifacts
-**Incident (stored)**
-```json
-{
-  "id": "inc-001",
-  "title": "Traffic Stoppage - Main St",
-  "severity": "HIGH",
-  "status": "action_required",
-  "summary": "Non-routine congestion likely caused by a collision...",
-  "streamsInvolved": ["cam-101", "soc-twt"],
-  "location": { "lat": 34.0522, "lng": -118.2437, "address": "Main St & 5th" }
-}
-```
-
-**Action (tracked)**
-```json
-{
-  "incidentId": "inc-001",
-  "recommendedAction": "Dispatch traffic control units and issue reroute advisory.",
-  "status": "recommended"
-}
-```
-
----
-
-## WebSocket Events
-Connect to `ws://<host>/ws` to receive:
-- `incident.created`
-- `incident.updated`
-- `analysis.progress` (status: started/completed)
-- `action.recommended`
-- `action.executed`
-- `action.dismissed`
+No real emergency systems are triggered.
 
 ---
 
@@ -270,10 +148,13 @@ Connect to `ws://<host>/ws` to receive:
 - `POST /api/incidents/:id/analyze` – Gemini analysis
 - `POST /api/ingest` – ingest a single payload
 - `GET /api/ingest/run` – run one ingestion cycle (Render wake endpoint)
-- `GET /api/actions` – list actions
-- `POST /api/actions` – create action
-- `POST /api/actions/:id/execute` – execute action
-- `POST /api/actions/:id/dismiss` – dismiss action
+
+---
+
+## WebSocket Events
+Connect to `ws://<host>/ws` to receive:
+- `incident.created`
+- `incident.updated`
 
 ---
 
@@ -283,13 +164,6 @@ Render free tier sleeps without traffic. Use a GitHub Action (or ping service) t
 GET https://<your-render-host>/api/ingest/run
 ```
 This wakes the backend and runs one ingestion cycle.
-
----
-
-## Reliability & Error Handling
-- **Gemini timeouts/errors** return a safe fallback response to avoid UI failures.
-- **Ingestion failures** are logged and do not crash the server.
-- **Render wake endpoint** gives deterministic ingestion even when cron jobs are unavailable.
 
 ---
 

@@ -18,13 +18,9 @@ Copy `.env.example` to `.env` and update the values:
 - `POST /api/incidents/:id/analyze` - trigger Gemini reasoning
 - `POST /api/ingest` - ingest multimodal windows
 - `GET /api/ingest/run` - run one ingestion cycle (for Render wake-up pings)
-- `GET /api/actions` - list action recommendations
-- `POST /api/actions` - create action recommendations
-- `POST /api/actions/:id/execute` - mark action executed
-- `POST /api/actions/:id/dismiss` - dismiss action
 
 ## WebSocket
-Connect to `ws://localhost:5000/ws` to receive `incident.created`, `incident.updated`, `analysis.progress`, and `action.*` events.
+Connect to `ws://localhost:5000/ws` to receive `incident.created` and `incident.updated` events.
 
 ## Render Free Tier Note
 Render free services sleep without traffic. Use a GitHub Action (or any external ping) to call:

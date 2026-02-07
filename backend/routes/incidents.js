@@ -62,8 +62,6 @@ router.post('/:id/analyze', async (req, res) => {
     // Return the formatted analysis to frontend
     if (req.app?.locals?.broadcast) {
       req.app.locals.broadcast('incident.updated', incident);
-      req.app.locals.broadcast('analysis.progress', { incidentId: incident.id, status: 'completed' });
-      req.app.locals.broadcast('action.recommended', action);
     }
     res.json(analysis);
 

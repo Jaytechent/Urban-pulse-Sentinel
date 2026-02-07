@@ -7,7 +7,6 @@ import connectDB from './config/db.js';
 import streamRoutes from './routes/streams.js';
 import incidentRoutes from './routes/incidents.js';
 import ingestRoutes from './routes/ingest.js';
-import actionRoutes from './routes/actions.js';
 import Incident from './models/Incident.js';
 import Stream from './models/Stream.js';
 import { runIngestionCycle } from './services/ingestPipeline.js';
@@ -27,7 +26,6 @@ app.use(express.json());
 app.use('/api/streams', streamRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/ingest', ingestRoutes);
-app.use('/api/actions', actionRoutes);
 
 // Health Check
 app.get('/', (req, res) => {
