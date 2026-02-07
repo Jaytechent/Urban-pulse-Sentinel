@@ -48,6 +48,9 @@ router.post('/:id/analyze', async (req, res) => {
     await incident.save();
 
     // Return the formatted analysis to frontend
+    if (req.app?.locals?.broadcast) {
+      req.app.locals.broadcast('incident.updated', incident);
+    }
     res.json(analysis);
 
   } catch (err) {
