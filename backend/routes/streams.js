@@ -20,7 +20,9 @@ router.post('/', async (req, res) => {
     name: req.body.name,
     type: req.body.type,
     endpoint: req.body.endpoint,
-    location: req.body.location
+    location: req.body.location,
+    countryCode: req.body.countryCode,
+    cityId: req.body.cityId
   });
 
   try {

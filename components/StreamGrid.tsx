@@ -8,7 +8,7 @@ interface StreamGridProps {
 
 const StreamGrid: React.FC<StreamGridProps> = ({ streams }) => {
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 h-full overflow-y-auto pr-2">
+    <div className="grid grid-cols-2 lg:grid-cols-4 auto-rows-fr gap-4 h-full min-h-0 overflow-y-auto pr-2">
       {streams.map((stream) => (
         <div key={stream.id} className="relative group bg-slate-900 rounded border border-slate-800 overflow-hidden aspect-video flex flex-col">
           

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { INITIAL_INCIDENTS, MOCK_STREAMS } from './constants';
+import { COUNTRY_CITY_OPTIONS, INITIAL_INCIDENTS, LANDMARKS, MOCK_STREAMS } from './constants';
 import CityMap from './components/CityMap';
 import StreamGrid from './components/StreamGrid';
 import IncidentFeed from './components/IncidentFeed';
@@ -9,16 +9,35 @@ import { LayoutDashboard, Radio, Settings, ShieldAlert, WifiOff, Zap, RefreshCw 
 import { Incident, Stream } from './types';
 
 const App: React.FC = () => {
-  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [incidents, setIncidents] = useState<Incident[]>(INITIAL_INCIDENTS);
   const [streams, setStreams] = useState<Stream[]>(MOCK_STREAMS);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
   const [backendError, setBackendError] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'streams' | 'settings'>('dashboard');
   const [isIngestLoading, setIsIngestLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
+  const [selectedCountryCode, setSelectedCountryCode] = useState(COUNTRY_CITY_OPTIONS[0]?.code ?? 'USA');
+  const [selectedCityId, setSelectedCityId] = useState(COUNTRY_CITY_OPTIONS[0]?.cities[0]?.id ?? 'los-angeles');
+  const [mapFocusScope, setMapFocusScope] = useState<'country' | 'city'>('city');
   
   const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api';
-  const selectedIncident = incidents.find(i => i.id === selectedIncidentId) || null;
+  const selectedCountry = COUNTRY_CITY_OPTIONS.find((country) => country.code === selectedCountryCode) ?? COUNTRY_CITY_OPTIONS[0];
+  const selectedCity = selectedCountry?.cities.find((city) => city.id === selectedCityId) ?? selectedCountry?.cities[0] ?? null;
+
+  const filteredIncidents = incidents.filter((incident) => {
+    if (!selectedCountry || !selectedCity) return true;
+    if (!incident.countryCode || !incident.cityId) return true;
+    return incident.countryCode === selectedCountry.code && incident.cityId === selectedCity.id;
+  });
+
+  const filteredStreams = streams.filter((stream) => {
+    if (!selectedCountry || !selectedCity) return true;
+    if (!stream.countryCode || !stream.cityId) return true;
+    return stream.countryCode === selectedCountry.code && stream.cityId === selectedCity.id;
+  });
+
+  const selectedIncident = filteredIncidents.find(i => i.id === selectedIncidentId) || null;
+  const cityLandmarks = selectedCity ? LANDMARKS.filter((landmark) => landmark.cityId === selectedCity.id) : [];
 
   // ✅ Fetch incidents from backend (silent)
   const fetchIncidents = async () => {
@@ -44,9 +63,11 @@ const App: React.FC = () => {
       const res = await fetch(`${backendUrl}/streams`);
       if (!res.ok) throw new Error("Failed to fetch streams");
       const data = await res.json();
-      if (data.length > 0) {
+      if (data.length >= 4) {
         setStreams(data);
+        return;
       }
+      setStreams(MOCK_STREAMS);
     } catch (err) {
       // Silently use mock streams if backend fails
       setStreams(MOCK_STREAMS);
@@ -101,6 +122,22 @@ const App: React.FC = () => {
       setSelectedIncidentId(incidents[0].id);
     }
   }, [incidents.length]);
+
+  useEffect(() => {
+    if (!selectedCountry) return;
+    setSelectedCityId(selectedCountry.cities[0]?.id ?? '');
+    setMapFocusScope('country');
+  }, [selectedCountryCode]);
+
+  useEffect(() => {
+    if (filteredIncidents.length === 0) {
+      setSelectedIncidentId(null);
+      return;
+    }
+    if (!selectedIncidentId || !filteredIncidents.some((incident) => incident.id === selectedIncidentId)) {
+      setSelectedIncidentId(filteredIncidents[0].id);
+    }
+  }, [filteredIncidents, selectedIncidentId]);
 
   return (
     <div className="flex h-screen w-screen bg-[#0b1220] text-slate-100 font-sans overflow-hidden">
@@ -186,7 +223,7 @@ const App: React.FC = () => {
 
             <div className="h-4 w-px bg-slate-700"></div>
             <div className="text-xs font-mono text-slate-400">
-              Incidents: {incidents.length} • Streams: {streams.length}
+              Incidents: {filteredIncidents.length} • Streams: {filteredStreams.length}
             </div>
             <div className="text-xs font-mono text-slate-400">
               V.3.0.1 // GEMINI-3-FLASH
@@ -199,7 +236,7 @@ const App: React.FC = () => {
           <main className="flex-1 flex overflow-hidden animate-in fade-in duration-300">
             {/* Left Col: Incidents */}
             <IncidentFeed 
-              incidents={incidents} 
+              incidents={filteredIncidents} 
               selectedId={selectedIncidentId}
               onSelect={setSelectedIncidentId}
             />
@@ -207,26 +244,95 @@ const App: React.FC = () => {
             {/* Center Col: Map & Streams */}
             <div className="flex-1 flex flex-col min-w-0">
               {/* Top: Map (60%) */}
-              <div className="flex-[3] p-4 pb-2 relative">
-                 <CityMap 
-                   incidents={incidents} 
-                   selectedIncidentId={selectedIncidentId} 
-                   onSelectIncident={setSelectedIncidentId}
-                 />
+              <div className="flex-[3] p-4 pb-2 flex flex-col min-h-0">
+                 <div className="flex flex-wrap items-center justify-between gap-3 pb-3">
+                   <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-slate-400">
+                    <span className="uppercase text-slate-300">G7 Coverage:</span>
+                     {COUNTRY_CITY_OPTIONS.map((country) => {
+                       const isActive = country.code === selectedCountry?.code;
+                       return (
+                         <button
+                           key={country.code}
+                           type="button"
+                           onClick={() => {
+                             setSelectedCountryCode(country.code);
+                             setMapFocusScope('country');
+                           }}
+                           className={`px-2 py-0.5 rounded-full border text-[10px] transition ${
+                             isActive
+                               ? 'border-indigo-400 text-indigo-200 bg-indigo-500/10'
+                               : 'border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200'
+                           }`}
+                         >
+                           {country.name}
+                         </button>
+                       );
+                     })}
+                   </div>
+                   <div className="flex items-center gap-2">
+                     <div className="flex flex-col gap-1">
+                       <label className="text-[10px] font-mono text-slate-400 uppercase">Country</label>
+                       <select
+                         value={selectedCountryCode}
+                         onChange={(event) => setSelectedCountryCode(event.target.value)}
+                         className="bg-slate-900 border border-slate-700 text-slate-200 text-xs font-mono rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                       >
+                         {COUNTRY_CITY_OPTIONS.map((country) => (
+                           <option key={country.code} value={country.code}>
+                             {country.name}
+                           </option>
+                         ))}
+                       </select>
+                     </div>
+                     <div className="flex flex-col gap-1">
+                       <label className="text-[10px] font-mono text-slate-400 uppercase">City</label>
+                       <select
+                         value={selectedCity?.id ?? ''}
+                         onChange={(event) => {
+                           setSelectedCityId(event.target.value);
+                           setMapFocusScope('city');
+                         }}
+                         className="bg-slate-900 border border-slate-700 text-slate-200 text-xs font-mono rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                       >
+                         {selectedCountry?.cities.map((city) => (
+                           <option key={city.id} value={city.id}>
+                             {city.name}
+                           </option>
+                         ))}
+                       </select>
+                     </div>
+                   </div>
+                 </div>
+                 <div className="flex-1 min-h-0">
+                    <CityMap 
+                      incidents={filteredIncidents} 
+                      selectedIncidentId={selectedIncidentId} 
+                      onSelectIncident={setSelectedIncidentId}
+                      selectedCity={selectedCity}
+                      selectedCountry={selectedCountry ?? null}
+                      mapFocusScope={mapFocusScope}
+                      landmarks={cityLandmarks}
+                    />
+                 </div>
               </div>
               
               {/* Bottom: Streams (40%) */}
               <div className="flex-[2] p-4 pt-2 border-t border-slate-800 bg-slate-900/40">
                  <div className="flex justify-between items-center mb-2">
-                   <h3 className="text-xs font-bold text-slate-400 font-mono uppercase">Live Feeds ({streams.length})</h3>
+                   <h3 className="text-xs font-bold text-slate-400 font-mono uppercase">
+                     Live Feeds ({filteredStreams.length})
+                   </h3>
+                   <span className="text-[10px] font-mono text-slate-500 uppercase">
+                     {selectedCity?.name ?? 'All Cities'} • {selectedCountry?.name ?? 'Global'}
+                   </span>
                  </div>
-                 <StreamGrid streams={streams} />
+                 <StreamGrid streams={filteredStreams} />
               </div>
             </div>
 
             {/* Right Col: AI Reasoning */}
             <div className="w-96 shadow-2xl z-10">
-               <ReasoningPanel incident={selectedIncident} streams={streams} />
+               <ReasoningPanel incident={selectedIncident} streams={filteredStreams} />
             </div>
           </main>
         )}

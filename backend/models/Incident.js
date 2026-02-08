@@ -20,6 +20,8 @@ const incidentSchema = new mongoose.Schema({
     default: 'detecting'
   },
   summary: { type: String },
+  countryCode: { type: String },
+  cityId: { type: String },
   streamsInvolved: [{ type: String }], // Array of Stream IDs
   hypothesis: {
     type: mongoose.Schema.Types.ObjectId,

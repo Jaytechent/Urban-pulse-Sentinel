@@ -19,6 +19,8 @@ const streamSchema = new mongoose.Schema({
     lng: Number,
     address: String
   },
+  countryCode: { type: String },
+  cityId: { type: String },
   lastUpdate: { type: Date, default: Date.now }
 });
 
