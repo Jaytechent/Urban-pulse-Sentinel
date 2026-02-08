@@ -89,24 +89,6 @@ const CityMap: React.FC<CityMapProps> = ({
       .attr("stroke-width", 0.5)
       .attr("opacity", 0.9);
 
-    const graticule = d3.geoGraticule10();
-    mapGroup
-      .append("path")
-      .attr("d", path(graticule))
-      .attr("fill", "none")
-      .attr("stroke", "#1f2937")
-      .attr("stroke-width", 0.4)
-      .attr("opacity", 0.5);
-
-    const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([1, 8])
-      .on("zoom", (event) => {
-        mapGroup.attr("transform", event.transform);
-      });
-
-    zoomBehaviorRef.current = zoom;
-    svg.call(zoom as d3.ZoomBehavior<SVGSVGElement, unknown>);
-
     const defs = svg.append("defs");
     const pulseId = "pulse-gradient";
     const gradient = defs.append("radialGradient")
@@ -116,6 +98,17 @@ const CityMap: React.FC<CityMapProps> = ({
 
     const incidentGroup = mapGroup.append("g").attr("class", "incident-group");
     const landmarkGroup = mapGroup.append("g").attr("class", "landmark-group");
+
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([1, 8])
+      .on("zoom", (event) => {
+        mapGroup.attr("transform", event.transform);
+        const showLabels = event.transform.k >= 3;
+        landmarkGroup.selectAll("text").attr("display", showLabels ? null : "none");
+      });
+
+    zoomBehaviorRef.current = zoom;
+    svg.call(zoom as d3.ZoomBehavior<SVGSVGElement, unknown>);
 
     incidents.forEach((incident) => {
       const [x, y] = projection([incident.location.lng, incident.location.lat]) ?? [width / 2, height / 2];
@@ -193,6 +186,7 @@ const CityMap: React.FC<CityMapProps> = ({
         .attr("font-size", "10px")
         .attr("font-weight", 600)
         .style("text-shadow", "0px 2px 4px rgba(0,0,0,0.8)")
+        .attr("display", "none")
         .text(landmark.name);
     });
 
