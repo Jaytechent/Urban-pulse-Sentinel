@@ -24,7 +24,7 @@ const CityMap: React.FC<CityMapProps> = ({ incidents, selectedIncidentId, onSele
     const svg = d3.select(svgRef.current)
       .attr("width", width)
       .attr("height", height)
-      .style("background-color", "#0f172a");
+      .style("background-color", "#0b1220");
 
     // --- Draw Grid (Simulate City Blocks) ---
     const gridSize = 40;
@@ -42,7 +42,7 @@ const CityMap: React.FC<CityMapProps> = ({ incidents, selectedIncidentId, onSele
             .attr("y", j * gridSize + 2)
             .attr("width", gridSize - 4)
             .attr("height", gridSize - 4)
-            .attr("fill", "#1e293b")
+            .attr("fill", "#1f2937")
             .attr("opacity", 0.4);
         }
       }
@@ -139,9 +139,9 @@ const CityMap: React.FC<CityMapProps> = ({ incidents, selectedIncidentId, onSele
   }, [incidents, selectedIncidentId]);
 
   return (
-    <div ref={containerRef} className="w-full h-full rounded-lg overflow-hidden border border-slate-700 bg-slate-900 relative">
-      <div className="absolute top-4 left-4 z-10 bg-slate-900/80 backdrop-blur px-3 py-1 rounded border border-slate-600">
-        <span className="text-xs text-slate-400 font-mono">LIVE MAP VISUALIZATION</span>
+    <div ref={containerRef} className="w-full h-full rounded-lg overflow-hidden border border-slate-800 bg-[#0b1220] relative">
+      <div className="absolute top-4 left-4 z-10 bg-slate-900/80 backdrop-blur px-3 py-1 rounded border border-slate-700">
+        <span className="text-xs text-slate-300 font-mono">LIVE MAP VISUALIZATION</span>
       </div>
       <svg ref={svgRef} className="w-full h-full"></svg>
     </div>

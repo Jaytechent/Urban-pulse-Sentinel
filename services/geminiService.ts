@@ -1,11 +1,18 @@
 import { Incident, Stream } from "../types";
 
+export interface IncidentAnalysis {
+  reasoning_steps: string[];
+  hypothesis_text: string;
+  recommended_action: string;
+  confidence_score: number;
+}
+
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api';
 
 export const generateIncidentAnalysis = async (
   incident: Incident,
   streams: Stream[]
-): Promise<string> => {
+): Promise<IncidentAnalysis> => {
   try {
     console.log("🔄 Starting analysis request...");
     console.log("   Incident:", incident.title);
@@ -39,12 +46,12 @@ export const generateIncidentAnalysis = async (
     console.log("✅ Analysis received from backend");
     console.log("   Response keys:", Object.keys(data));
     
-    return JSON.stringify(data);
+    return data;
   } catch (error) {
     console.error("❌ Analysis Request Failed:", error);
     
     // Return fallback response
-    return JSON.stringify({
+    return {
       reasoning_steps: [
         "Backend connection failed.",
         "Check server logs.",
@@ -53,7 +60,7 @@ export const generateIncidentAnalysis = async (
       hypothesis_text: "System unreachable.",
       recommended_action: "Manual Override",
       confidence_score: 0.0
-    });
+    };
   }
 };
 
@@ -93,4 +100,3 @@ export const generateIncidentAnalysis = async (
 //     });
 //   }
 // };
-
