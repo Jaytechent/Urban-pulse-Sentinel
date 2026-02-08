@@ -31,7 +31,7 @@ export const createIncidentFromAnalysis = async ({
 
   const incident = await Incident.create({
     id: generateIncidentId(incidentType.slice(0, 3)),
-    title: `Automated ${incidentType.toUpperCase()} Anomaly`,
+   title: result.title || `${result.summary?.slice(0, 25)}...`,
     severity: result.severity,
     status: 'analyzing',
     summary: result.summary,

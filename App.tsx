@@ -5,39 +5,102 @@ import StreamGrid from './components/StreamGrid';
 import IncidentFeed from './components/IncidentFeed';
 import ReasoningPanel from './components/ReasoningPanel';
 import SettingsView from './components/SettingsView';
-import { LayoutDashboard, Radio, Settings, ShieldAlert, WifiOff } from 'lucide-react';
-import { Incident } from './types';
+import { LayoutDashboard, Radio, Settings, ShieldAlert, WifiOff, Zap, RefreshCw } from 'lucide-react';
+import { Incident, Stream } from './types';
 
 const App: React.FC = () => {
   const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [streams, setStreams] = useState<Stream[]>(MOCK_STREAMS);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
   const [backendError, setBackendError] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'streams' | 'settings'>('dashboard');
-  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api';
+  const [isIngestLoading, setIsIngestLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api';
   const selectedIncident = incidents.find(i => i.id === selectedIncidentId) || null;
 
-  // Fetch Incidents from Backend
-  useEffect(() => {
-    const fetchIncidents = async () => {
-      try {
-        const res = await fetch(`${backendUrl}/incidents`);
-        if (!res.ok) throw new Error("Failed to connect");
-        const data = await res.json();
-        setIncidents(data);
-        setBackendError(false);
-      } catch (err) {
-        console.error("Backend unreachable, using fallback data if available", err);
-        setBackendError(true);
-        setIncidents(INITIAL_INCIDENTS);
-      }
-    };
+  // ✅ Fetch incidents from backend (silent)
+  const fetchIncidents = async () => {
+    try {
+      setIsFetching(true);
+      const res = await fetch(`${backendUrl}/incidents`);
+      if (!res.ok) throw new Error("Failed to fetch incidents");
+      const data = await res.json();
+      setIncidents(data);
+      setBackendError(false);
+    } catch (err) {
+      console.error("❌ Failed to fetch incidents:", err);
+      setBackendError(true);
+      // Keep existing incidents, don't fall back to INITIAL_INCIDENTS
+    } finally {
+      setIsFetching(false);
+    }
+  };
 
+  // ✅ Fetch streams from backend (silent)
+  const fetchStreams = async () => {
+    try {
+      const res = await fetch(`${backendUrl}/streams`);
+      if (!res.ok) throw new Error("Failed to fetch streams");
+      const data = await res.json();
+      if (data.length > 0) {
+        setStreams(data);
+      }
+    } catch (err) {
+      // Silently use mock streams if backend fails
+      setStreams(MOCK_STREAMS);
+    }
+  };
+
+  // ✅ Trigger ingest cycle to create incidents
+  const triggerIngest = async () => {
+    console.log('🌱 Triggering ingest cycle...');
+    setIsIngestLoading(true);
+    try {
+      const res = await fetch(`${backendUrl}/ingest/run`, {
+        method: 'GET'
+      });
+      if (!res.ok) throw new Error("Failed to trigger ingest");
+      const data = await res.json();
+      console.log('✅ Ingest cycle completed:', data.incidents?.length || 0, 'incident(s) created');
+      
+      // Refresh incidents after ingest
+      setTimeout(() => {
+        fetchIncidents();
+        fetchStreams();
+      }, 1000);
+    } catch (err) {
+      console.error("❌ Ingest error:", err);
+      setBackendError(true);
+    } finally {
+      setIsIngestLoading(false);
+    }
+  };
+
+  // Fetch incidents and streams on mount (only once)
+  useEffect(() => {
+    console.log('🚀 App mounted');
     fetchIncidents();
-    // Poll every 5 seconds for updates
-    const interval = setInterval(fetchIncidents, 5000);
+    fetchStreams();
+
+    // Only poll if no incidents exist (every 10 seconds)
+    // This helps when incidents are created but not yet fetched
+    const interval = setInterval(() => {
+      if (incidents.length === 0) {
+        fetchIncidents();
+      }
+    }, 100000);
+    
     return () => clearInterval(interval);
   }, []);
+
+  // Auto-select first incident if none selected
+  useEffect(() => {
+    if (incidents.length > 0 && !selectedIncidentId) {
+      setSelectedIncidentId(incidents[0].id);
+    }
+  }, [incidents.length]);
 
   return (
     <div className="flex h-screen w-screen bg-[#0b1220] text-slate-100 font-sans overflow-hidden">
@@ -98,8 +161,36 @@ const App: React.FC = () => {
                </div>
             )}
           </div>
+          
+          {/* Action buttons */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={triggerIngest}
+              disabled={isIngestLoading}
+              className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-bold py-1 px-3 rounded transition"
+              title="Trigger ingest cycle to create incidents"
+            >
+              <span>🌱</span>
+              {isIngestLoading ? 'Ingesting...' : 'Trigger Ingest'}
+            </button>
+
+            <button
+              onClick={fetchIncidents}
+              disabled={isFetching}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold py-1 px-3 rounded transition"
+              title="Refresh incidents"
+            >
+              <RefreshCw size={14} className={isFetching ? 'animate-spin' : ''} />
+              Refresh
+            </button>
+
+            <div className="h-4 w-px bg-slate-700"></div>
             <div className="text-xs font-mono text-slate-400">
-             V.3.0.1 // GEMINI-3-FLASH
+              Incidents: {incidents.length} • Streams: {streams.length}
+            </div>
+            <div className="text-xs font-mono text-slate-400">
+              V.3.0.1 // GEMINI-3-FLASH
+            </div>
           </div>
         </header>
 
@@ -127,15 +218,15 @@ const App: React.FC = () => {
               {/* Bottom: Streams (40%) */}
               <div className="flex-[2] p-4 pt-2 border-t border-slate-800 bg-slate-900/40">
                  <div className="flex justify-between items-center mb-2">
-                   <h3 className="text-xs font-bold text-slate-400 font-mono uppercase">Live Feeds ({MOCK_STREAMS.length})</h3>
+                   <h3 className="text-xs font-bold text-slate-400 font-mono uppercase">Live Feeds ({streams.length})</h3>
                  </div>
-                 <StreamGrid streams={MOCK_STREAMS} />
+                 <StreamGrid streams={streams} />
               </div>
             </div>
 
             {/* Right Col: AI Reasoning */}
             <div className="w-96 shadow-2xl z-10">
-               <ReasoningPanel incident={selectedIncident} streams={MOCK_STREAMS} />
+               <ReasoningPanel incident={selectedIncident} streams={streams} />
             </div>
           </main>
         )}
@@ -148,11 +239,11 @@ const App: React.FC = () => {
                   FULL SPECTRUM MONITORING
                 </h2>
                 <div className="text-sm font-mono text-slate-400">
-                  {MOCK_STREAMS.length} Active Sources
+                  {streams.length} Active Sources
                 </div>
               </div>
               <div className="flex-1 bg-slate-900/50 rounded-xl border border-slate-800 p-4">
-                 <StreamGrid streams={MOCK_STREAMS} />
+                 <StreamGrid streams={streams} />
               </div>
            </main>
         )}
