@@ -1,0 +1,5 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="14" fill="#7b3f00"/>
+  <rect x="6" y="6" width="52" height="52" rx="12" fill="#5a2f1d" stroke="#f5d48a" stroke-width="2"/>
+  <text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" font-family="Azeret Mono, sans-serif" font-size="32" fill="#fdf4e3">U</text>
+</svg>

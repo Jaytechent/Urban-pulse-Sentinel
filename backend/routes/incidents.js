@@ -20,8 +20,19 @@ router.get('/', async (req, res) => {
 // POST /api/incidents/:id/analyze - Trigger Gemini Analysis
 router.post('/:id/analyze', async (req, res) => {
   try {
+    console.log(`🔍 Analyze request for incident: ${req.params.id}`);
+    if (req.body?.incident) {
+      console.log(`   Payload incident id: ${req.body.incident.id}`);
+    }
+    if (req.body?.streams) {
+      console.log(`   Payload streams: ${req.body.streams.length}`);
+    }
     const incident = await Incident.findOne({ id: req.params.id });
-    if (!incident) return res.status(404).json({ message: 'Incident not found' });
+    if (!incident) {
+      console.warn(`⚠️ Incident not found for id: ${req.params.id}`);
+      return res.status(404).json({ message: 'Incident not found' });
+    }
+    console.log(`✅ Incident found: ${incident.title}`);
 
     // Check if hypothesis exists and is fresh (simple check for now)
     // if (incident.hypothesis) ... logic to skip if fresh
@@ -31,9 +42,11 @@ router.post('/:id/analyze', async (req, res) => {
     }
 
     const streams = await Stream.find({ id: { $in: incident.streamsInvolved } });
+    console.log(`   Streams involved: ${incident.streamsInvolved?.length || 0}`);
     
     // Call Gemini Agent
     const analysis = await analyzeIncidentContext(incident, streams);
+    console.log('✅ Gemini analysis complete.');
 
     // Save Hypothesis
     const hypothesis = new Hypothesis({

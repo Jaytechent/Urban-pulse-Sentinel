@@ -10,7 +10,7 @@ const StreamGrid: React.FC<StreamGridProps> = ({ streams }) => {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 h-full overflow-y-auto pr-2">
       {streams.map((stream) => (
-        <div key={stream.id} className="relative group bg-slate-800 rounded border border-slate-700 overflow-hidden aspect-video flex flex-col">
+        <div key={stream.id} className="relative group bg-slate-900 rounded border border-slate-800 overflow-hidden aspect-video flex flex-col">
           
           {/* Header Overlay */}
           <div className="absolute top-0 left-0 right-0 p-2 bg-gradient-to-b from-black/80 to-transparent z-10 flex justify-between items-start">
@@ -27,7 +27,7 @@ const StreamGrid: React.FC<StreamGridProps> = ({ streams }) => {
           </div>
 
           {/* Content */}
-          <div className="flex-1 bg-slate-900 flex items-center justify-center relative">
+          <div className="flex-1 bg-slate-950 flex items-center justify-center relative">
             {stream.type === StreamType.VIDEO ? (
               <>
                 <img 
@@ -66,14 +66,14 @@ const StreamGrid: React.FC<StreamGridProps> = ({ streams }) => {
           </div>
 
           {/* Footer Label */}
-          <div className="bg-slate-900 p-2 border-t border-slate-700">
-            <h4 className="text-xs text-slate-300 truncate font-medium">{stream.name}</h4>
+          <div className="bg-slate-950 p-2 border-t border-slate-800">
+            <h4 className="text-xs text-slate-200 truncate font-medium">{stream.name}</h4>
           </div>
         </div>
       ))}
       
       {/* Add Stream Button Placeholder */}
-      <div className="border border-slate-700 border-dashed rounded flex flex-col items-center justify-center gap-2 bg-slate-900/30 hover:bg-slate-800/50 transition-colors cursor-pointer text-slate-500 hover:text-slate-300">
+      <div className="border border-slate-800 border-dashed rounded flex flex-col items-center justify-center gap-2 bg-slate-900/40 hover:bg-slate-800/60 transition-colors cursor-pointer text-slate-400 hover:text-slate-200">
          <span className="text-2xl">+</span>
          <span className="text-xs font-mono">ADD SOURCE</span>
       </div>

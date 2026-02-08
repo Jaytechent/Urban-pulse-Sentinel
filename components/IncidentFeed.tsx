@@ -10,10 +10,10 @@ interface IncidentFeedProps {
 
 const IncidentFeed: React.FC<IncidentFeedProps> = ({ incidents, onSelect, selectedId }) => {
   return (
-    <div className="h-full flex flex-col bg-slate-900 border-r border-slate-700 w-80">
-      <div className="p-4 border-b border-slate-700">
+    <div className="h-full flex flex-col bg-[#0f172a] border-r border-slate-800 w-80">
+      <div className="p-4 border-b border-slate-800">
         <h2 className="text-sm font-bold text-slate-100 font-mono uppercase tracking-wider flex items-center gap-2">
-           <AlertTriangle size={16} className="text-sentinel-warning" />
+           <AlertTriangle size={16} className="text-amber-400" />
            Detected Events
         </h2>
       </div>
@@ -28,12 +28,12 @@ const IncidentFeed: React.FC<IncidentFeedProps> = ({ incidents, onSelect, select
              <div 
                key={incident.id}
                onClick={() => onSelect(incident.id)}
-               className={`p-4 border-b border-slate-800 cursor-pointer hover:bg-slate-800/50 transition-colors border-l-4 ${severityColor} ${isActive ? 'bg-slate-800' : ''}`}
+               className={`p-4 border-b border-slate-800 cursor-pointer hover:bg-slate-800/70 transition-colors border-l-4 ${severityColor} ${isActive ? 'bg-slate-800' : ''}`}
              >
                <div className="flex justify-between items-start mb-1">
-                 <h3 className="text-sm font-bold text-slate-200 leading-tight">{incident.title}</h3>
+                 <h3 className="text-sm font-bold text-slate-100 leading-tight">{incident.title}</h3>
                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
-                    incident.status === 'action_required' ? 'bg-red-500/20 text-red-400 animate-pulse' : 'bg-slate-700 text-slate-400'
+                    incident.status === 'action_required' ? 'bg-red-500/20 text-red-300 animate-pulse' : 'bg-slate-800 text-slate-300'
                  }`}>
                    {incident.status === 'action_required' ? 'ACT' : 'ANA'}
                  </span>
@@ -57,7 +57,7 @@ const IncidentFeed: React.FC<IncidentFeedProps> = ({ incidents, onSelect, select
            );
         })}
         {incidents.length === 0 && (
-          <div className="p-6 text-center text-slate-600 text-sm italic">
+          <div className="p-6 text-center text-slate-500 text-sm italic">
             No active anomalies detected.
           </div>
         )}
