@@ -3,17 +3,14 @@ import { runIngestionCycle } from '../services/ingestPipeline.js';
 
 const router = express.Router();
 
-// GET /api/ingest/run - Trigger ingestion cycle
+// GET /api/ingest/run - Legacy endpoint (uses default LA location)
 router.get('/run', async (req, res) => {
   try {
     console.log('\n' + '='.repeat(70));
-    console.log('🌱 INGEST CYCLE TRIGGERED');
+    console.log('🌱 INGEST CYCLE TRIGGERED (Default Location)');
     console.log('='.repeat(70));
 
-    // Get broadcast function from app.locals
     const broadcaster = req.app?.locals?.broadcast;
-
-    // Run the ingest cycle
     const result = await runIngestionCycle({ broadcaster });
 
     console.log('✅ INGEST CYCLE COMPLETE');
@@ -26,6 +23,57 @@ router.get('/run', async (req, res) => {
       results: result.results,
       incidents: result.incidents,
       message: `Created ${result.incidents.length} incident(s)`
+    });
+
+  } catch (err) {
+    console.error('❌ INGEST ERROR:', err.message);
+    res.status(500).json({
+      success: false,
+      message: err.message,
+      error: err.toString()
+    });
+  }
+});
+
+// ✅ NEW: POST /api/ingest/run - With city/country selection
+router.post('/run', async (req, res) => {
+  try {
+    const { cityId, countryCode, cityName, lat, lng } = req.body;
+
+    console.log('\n' + '='.repeat(70));
+    console.log(`🌱 INGEST CYCLE TRIGGERED FOR: ${cityName} (${countryCode})`);
+    console.log(`   Location: ${lat}, ${lng}`);
+    console.log('='.repeat(70));
+
+    const broadcaster = req.app?.locals?.broadcast;
+
+    // Create custom location object for the selected city
+    const location = {
+      lat: parseFloat(lat) || 34.0522,
+      lng: parseFloat(lng) || -118.2437,
+      address: cityName || 'Downtown'
+    };
+
+    // Pass city info to ingest pipeline
+    const result = await runIngestionCycle({ 
+      broadcaster,
+      location,
+      cityId,
+      countryCode,
+      cityName
+    });
+
+    console.log('✅ INGEST CYCLE COMPLETE');
+    console.log(`   Incidents created: ${result.incidents.length}`);
+    console.log('='.repeat(70) + '\n');
+
+    res.json({
+      success: true,
+      location: { cityName, countryCode, lat, lng },
+      sources: result.sources,
+      results: result.results,
+      incidents: result.incidents,
+      message: `Created ${result.incidents.length} incident(s) for ${cityName}`
     });
 
   } catch (err) {

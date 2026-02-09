@@ -23,7 +23,9 @@ export const createIncidentFromAnalysis = async ({
   result,
   location = defaultLocation,
   streamId,
-  broadcaster
+  broadcaster,
+  cityId,
+  countryCode
 }) => {
   if (!result?.anomalyDetected) {
     return null;
@@ -31,12 +33,14 @@ export const createIncidentFromAnalysis = async ({
 
   const incident = await Incident.create({
     id: generateIncidentId(incidentType.slice(0, 3)),
-   title: result.title || `${result.summary?.slice(0, 25)}...`,
+    title: result.title || `${result.summary?.slice(0, 25)}...`,
     severity: result.severity,
     status: 'analyzing',
     summary: result.summary,
     streamsInvolved: streamId ? [streamId] : [],
-    location: location || defaultLocation
+    location: location || defaultLocation,
+    cityId: cityId,
+    countryCode: countryCode
   });
 
   if (broadcaster) {
@@ -46,7 +50,21 @@ export const createIncidentFromAnalysis = async ({
   return incident;
 };
 
-export const runIngestionCycle = async ({ broadcaster } = {}) => {
+// ✅ UPDATED: Accepts custom location and city info
+export const runIngestionCycle = async ({ 
+  broadcaster,
+  location,
+  cityId,
+  countryCode,
+  cityName
+} = {}) => {
+  
+  // Use provided location or default to LA
+  const analysisLocation = location || defaultLocation;
+
+  console.log(`📍 Running ingest for: ${cityName || analysisLocation.address}`);
+  console.log(`   Coordinates: ${analysisLocation.lat}, ${analysisLocation.lng}`);
+
   const traffic = await fetchTrafficSignals();
   const weather = await fetchWeatherSignals();
   const reddit = await fetchRedditSignals();
@@ -64,24 +82,33 @@ export const runIngestionCycle = async ({ broadcaster } = {}) => {
   const videoIncident = await createIncidentFromAnalysis({
     incidentType: 'video',
     result: videoResult,
+    location: analysisLocation,
     streamId: process.env.VIDEO_STREAM_ID,
-    broadcaster
+    broadcaster,
+    cityId,
+    countryCode
   });
   if (videoIncident) incidents.push(videoIncident);
 
   const socialIncident = await createIncidentFromAnalysis({
     incidentType: 'social',
     result: socialResult,
+    location: analysisLocation,
     streamId: process.env.SOCIAL_STREAM_ID,
-    broadcaster
+    broadcaster,
+    cityId,
+    countryCode
   });
   if (socialIncident) incidents.push(socialIncident);
 
   const sensorIncident = await createIncidentFromAnalysis({
     incidentType: 'sensor',
     result: sensorResult,
+    location: analysisLocation,
     streamId: process.env.SENSOR_STREAM_ID,
-    broadcaster
+    broadcaster,
+    cityId,
+    countryCode
   });
   if (sensorIncident) incidents.push(sensorIncident);
 
